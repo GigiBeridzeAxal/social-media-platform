@@ -18,8 +18,12 @@ const app = express()
 
 // Middleware
 app.use(helmet())
+const allowedOrigins = (process.env.FRONTEND_URL || '*').split(',').map(s => s.trim())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: allowedOrigins.includes('*') ? '*' : (origin, cb) => {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) cb(null, true)
+    else cb(new Error('Not allowed by CORS'))
+  },
   credentials: true
 }))
 app.use(morgan('dev'))

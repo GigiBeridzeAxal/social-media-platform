@@ -6,6 +6,7 @@
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "env": {
-    "BACKEND_URL": "https://socialsphere-backend-46mqkbyo9-gigiberidzes-projects.vercel.app"
+    "VITE_API_URL": "https://socialsphere-backend.vercel.app",
+    "VITE_BYPASS_SECRET": "socialsphere-bypass-2024"
   }
 }
