@@ -3,10 +3,14 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://socialsphere-backend.vercel.app/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
-  "env": {
-    "VITE_API_URL": "https://socialsphere-backend.vercel.app",
-    "VITE_BYPASS_SECRET": "socialsphere-bypass-2024"
+  "build": {
+    "env": {
+      "VITE_API_URL": "",
+      "VITE_APP_NAME": "SocialSphere",
+      "VITE_SOCKET_URL": ""
+    }
   }
 }
