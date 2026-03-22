@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import mongoose from 'mongoose'
 import { connectDB } from './config/database.js'
 import authRoutes from './routes/auth.js'
 import postRoutes from './routes/posts.js'
@@ -31,31 +32,29 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use(rateLimiter)
 
-// Lazy DB connection — connect once per serverless instance
-let dbConnected = false
-app.use(async (req, res, next) => {
-  if (!dbConnected) {
-    if (!process.env.MONGODB_URI) {
-      return res.status(503).json({ message: 'MONGODB_URI environment variable is not set.' })
-    }
-    try {
-      await connectDB()
-      dbConnected = true
-    } catch (err) {
-      console.error('DB connection error:', err.message)
-      const isWhitelistError = err.message.includes('IP') || err.message.includes('whitelist') || err.message.includes('Could not connect')
-      return res.status(503).json({
-        message: isWhitelistError
-          ? 'MongoDB Atlas connection blocked. Please whitelist 0.0.0.0/0 in Atlas Network Access.'
-          : `Database unavailable: ${err.message}`
-      })
-    }
-  }
-  next()
+// Health check (no DB required)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), db: mongoose.connection.readyState === 1 })
 })
 
-// Routes
-app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString(), db: dbConnected }))
+// Ensure DB connected before API routes
+app.use(async (req, res, next) => {
+  if (!process.env.MONGODB_URI) {
+    return res.status(503).json({ message: 'MONGODB_URI environment variable is not set.' })
+  }
+  try {
+    await connectDB()
+    next()
+  } catch (err) {
+    console.error('DB connection error:', err.message)
+    const isWhitelistError = err.message.includes('IP') || err.message.includes('whitelist') || err.message.includes('Could not connect')
+    return res.status(503).json({
+      message: isWhitelistError
+        ? 'MongoDB Atlas connection blocked. Please whitelist 0.0.0.0/0 in Atlas Network Access.'
+        : `Database unavailable: ${err.message}`
+    })
+  }
+})
 app.use('/api/auth', authRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/users', userRoutes)
@@ -78,7 +77,6 @@ if (process.env.NODE_ENV !== 'production') {
   setupWebSocket(httpServer)
   const PORT = process.env.PORT || 3001
   connectDB().then(() => {
-    dbConnected = true
     httpServer.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
   }).catch(err => {
     console.error('Failed to connect to database:', err)
