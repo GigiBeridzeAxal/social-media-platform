@@ -13,10 +13,8 @@
     }
   ],
   "env": {
-    "MONGODB_URI": "@social-media-mongodb-uri",
-    "JWT_SECRET": "@social-media-jwt-secret",
     "JWT_EXPIRES_IN": "7d",
-    "FRONTEND_URL": "@social-media-frontend-url",
+    "FRONTEND_URL": "https://socialsphere-frontend.vercel.app",
     "NODE_ENV": "production"
   }
 }

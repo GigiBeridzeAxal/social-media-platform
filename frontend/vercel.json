@@ -6,6 +6,6 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "env": {
-    "VITE_API_URL": "@social-media-api-url"
+    "VITE_API_URL": "https://socialsphere-backend.vercel.app"
   }
 }
