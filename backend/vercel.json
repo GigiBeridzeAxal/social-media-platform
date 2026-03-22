@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/server.js"
+    }
+  ],
+  "env": {
+    "MONGODB_URI": "@social-media-mongodb-uri",
+    "JWT_SECRET": "@social-media-jwt-secret",
+    "JWT_EXPIRES_IN": "7d",
+    "FRONTEND_URL": "@social-media-frontend-url",
+    "NODE_ENV": "production"
+  }
+}
