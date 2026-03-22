@@ -3,11 +3,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "env": {
-    "VITE_API_URL": "",
     "BACKEND_URL": "https://socialsphere-backend-46mqkbyo9-gigiberidzes-projects.vercel.app"
   }
 }
