@@ -34,13 +34,21 @@ app.use(rateLimiter)
 // Lazy DB connection — connect once per serverless instance
 let dbConnected = false
 app.use(async (req, res, next) => {
-  if (!dbConnected && process.env.MONGODB_URI) {
+  if (!dbConnected) {
+    if (!process.env.MONGODB_URI) {
+      return res.status(503).json({ message: 'MONGODB_URI environment variable is not set.' })
+    }
     try {
       await connectDB()
       dbConnected = true
     } catch (err) {
       console.error('DB connection error:', err.message)
-      return res.status(503).json({ message: 'Database unavailable. Set MONGODB_URI in Vercel environment variables.' })
+      const isWhitelistError = err.message.includes('IP') || err.message.includes('whitelist') || err.message.includes('Could not connect')
+      return res.status(503).json({
+        message: isWhitelistError
+          ? 'MongoDB Atlas connection blocked. Please whitelist 0.0.0.0/0 in Atlas Network Access.'
+          : `Database unavailable: ${err.message}`
+      })
     }
   }
   next()
