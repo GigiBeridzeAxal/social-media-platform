@@ -3,12 +3,25 @@ import User from '../models/User.js'
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  path: '/'
+}
+
+function setAuthCookie(res, token) {
+  res.cookie('token', token, COOKIE_OPTIONS)
+}
+
 export async function register(req, res, next) {
   try {
     const { username, email, password, firstName, lastName } = req.body
     const displayName = `${firstName} ${lastName}`.trim()
     const user = await User.create({ username, email, password, displayName, firstName, lastName })
     const token = signToken(user._id)
+    setAuthCookie(res, token)
     res.status(201).json({ token, user: user.toPublicJSON() })
   } catch (err) {
     next(err)
@@ -23,6 +36,7 @@ export async function login(req, res, next) {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
     const token = signToken(user._id)
+    setAuthCookie(res, token)
     res.json({ token, user: user.toPublicJSON() })
   } catch (err) {
     next(err)
@@ -30,6 +44,7 @@ export async function login(req, res, next) {
 }
 
 export async function logout(req, res) {
+  res.clearCookie('token', { ...COOKIE_OPTIONS, maxAge: 0 })
   res.json({ message: 'Logged out successfully' })
 }
 

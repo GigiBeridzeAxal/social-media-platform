@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
 import mongoose from 'mongoose'
 import { connectDB } from './config/database.js'
 import authRoutes from './routes/auth.js'
@@ -19,17 +20,20 @@ const app = express()
 
 // Middleware
 app.use(helmet())
-const allowedOrigins = (process.env.FRONTEND_URL || '*').split(',').map(s => s.trim())
+const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean)
 app.use(cors({
-  origin: allowedOrigins.includes('*') ? '*' : (origin, cb) => {
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) cb(null, true)
-    else cb(new Error('Not allowed by CORS'))
+  origin: (origin, cb) => {
+    // Allow requests with no origin (mobile, curl, server-to-server)
+    if (!origin) return cb(null, true)
+    if (allowedOrigins.length === 0 || allowedOrigins.some(o => origin.startsWith(o))) return cb(null, true)
+    cb(new Error('Not allowed by CORS'))
   },
   credentials: true
 }))
 app.use(morgan('dev'))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+app.use(cookieParser())
 app.use(rateLimiter)
 
 // Health check (no DB required)
