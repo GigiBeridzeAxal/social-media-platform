@@ -66,8 +66,19 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
+let initPromise = null
+
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+
+  // Wait for auth to be initialized (validates token against backend on first load)
+  if (!authStore.initialized) {
+    if (!initPromise) {
+      initPromise = authStore.init()
+    }
+    await initPromise
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'login' })
   } else if (to.meta.guest && authStore.isAuthenticated) {

@@ -19,8 +19,15 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+      const url = err.config?.url || ''
+      // Don't auto-redirect for auth endpoints — let the store/router handle those
+      const isAuthEndpoint = url.includes('/auth/me') || url.includes('/auth/login') || url.includes('/auth/register')
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('token')
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+      }
     }
     return Promise.reject(err)
   }
